@@ -1,0 +1,43 @@
+# Copyright (c) 2026. All rights reserved.
+
+name: drone_env
+version: 0.1.0
+description: "Drone Altitude PID Tuner OpenEnv Competition Entry"
+
+# Environment Models (Pydantic based)
+models:
+  action: drone_env.drone_environment.DroneAction
+  observation: drone_env.drone_environment.DroneObservation
+
+# Task Graders (Easy, Medium, Hard)
+tasks:
+  - id: stability_easy
+    description: "Reach 50m with 1.0kg mass and -5N wind."
+    target_score: 0.8
+    config:
+      target_altitude: 50.0
+      mass: 1.0
+      base_wind: -5.0
+
+  - id: payload_medium
+    description: "Reach 100m with 2.0kg mass and -10N wind."
+    target_score: 0.7
+    config:
+      target_altitude: 100.0
+      mass: 2.0
+      base_wind: -10.0
+
+  - id: stormy_hard
+    description: "Reach 150m with 0.5kg mass and -15N wind."
+    target_score: 0.6
+    config:
+      target_altitude: 150.0
+      mass: 0.5
+      base_wind: -15.0
+
+# Deployment Configuration
+deployment:
+  mode: docker
+  cpu: 2
+  memory: 8
+  port: 8000

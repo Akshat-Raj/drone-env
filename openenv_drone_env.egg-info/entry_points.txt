@@ -1,0 +1,2 @@
+[openenv.envs]
+drone_env = drone_env.server:app

@@ -27,6 +27,7 @@ dependencies = [
 packages = ["drone_env"]
 
 [project.scripts]
-server = "drone_env.server.app:app"
+server = "drone_env.server.app:main"
 
 [project.entry-points."openenv.envs"]
+drone_env = "drone_env.server.app:main"

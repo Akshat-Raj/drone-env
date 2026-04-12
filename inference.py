@@ -37,12 +37,17 @@ def run_grpo_tuning():
     """
     Main function to run the GRPO training loop.
     This is a simplified example and would require a more robust implementation for real train
-ing.                                                                                              """
+ing.                                                                                          
+    """
     # 1. Initialize Environment Client
     api_base_url = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
-    async_client = GenericEnvClient(base_url=api_base_url)
-    client = async_client.sync()
-    client.reset()
+    try:
+        async_client = GenericEnvClient(base_url=api_base_url)
+        client = async_client.sync()
+        client.reset()
+    except Exception as e:
+        print(f"Failed to connect to environment server at {api_base_url}: {e}")
+        return
 
     # 2. Load a Pre-trained LLM and Tokenizer
     model_name = "gpt2" # Using gpt2 for simplicity, but a larger model is recommended
@@ -82,8 +87,13 @@ ing.                                                                            
             pid_params = extract_pid_from_text(text)
             actions.append(pid_params)
             
-            obs = client.step(pid_params)
-            reward = get_reward(obs.rmse)
+            try:
+                obs = client.step(pid_params)
+                reward = get_reward(obs.rmse)
+            except Exception as e:
+                print(f"Error during step: {e}")
+                reward = 0.0
+            
             rewards.append(reward)
 
         print(f"Episode {episode+1}: Mean Reward: {np.mean(rewards):.4f}")

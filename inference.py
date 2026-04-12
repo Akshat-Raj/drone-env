@@ -41,12 +41,13 @@ def run_grpo_tuning():
 ing.                                                                                          
     """
     # 1. Initialize Environment Client
-    api_base_url = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
+    # NOTE: The environment server might be running on localhost during proxy evaluation. We check OPENENV_BASE_URL if it's separate from API_BASE_URL. 
+    env_base_url = os.environ.get("OPENENV_BASE_URL", "http://127.0.0.1:8000")
     try:
-        async_client = GenericEnvClient(base_url=api_base_url)
+        async_client = GenericEnvClient(base_url=env_base_url)
         client = async_client.sync()
     except Exception as e:
-        print(f"Failed to connect to environment server at {api_base_url}: {e}")
+        print(f"Failed to connect to environment server at {env_base_url}: {e}")
         return
 
     # 2. Load a Pre-trained LLM and Tokenizer

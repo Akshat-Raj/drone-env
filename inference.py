@@ -36,10 +36,11 @@ def extract_pid_from_text(text):
 def run_grpo_tuning():
     """
     Main function to run the GRPO training loop.
-    This is a simplified example and would require a more robust implementation for real training.
-    """
+    This is a simplified example and would require a more robust implementation for real train
+ing.                                                                                              """
     # 1. Initialize Environment Client
-    async_client = GenericEnvClient(base_url="http://127.0.0.1:8000")
+    api_base_url = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
+    async_client = GenericEnvClient(base_url=api_base_url)
     client = async_client.sync()
     client.reset()
 

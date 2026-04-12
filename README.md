@@ -17,6 +17,11 @@ The **Agentic Drone PID Tuner** introduces an OpenEnv RL playground designed to 
 
 If an AI can reason about dynamic disturbances (wind, changing payload mass) and adjust physics controllers autonomously without heuristic blind spots, we unlock massive efficiency gains in industrial autonomy deployment.
 
+### How this differs from existing solutions:
+There are currently several powerful tools for drone controller tuning out in the wild, including **PIDtoolbox / PTB Labs**, **MATLAB/Simulink Closed-Loop PID Autotuner**, **Bitcraze cfclient** and web applications like **The Flying Emu PID Tuner**. 
+
+What sets the **Agentic PID Tuner** environment apart is that **every single one of those tools inherently assumes a human-in-the-loop**, requires real manual flight tests, or fundamentally relies on post-flight blackbox logging (e.g. Betaflight Blackbox Explorer). This OpenEnv sandbox creates a fully autonomous, programmatic closed loop. It is actively designed to teach an AI Agent (an LLM) to take over the flight engineering process natively in simulation without rendering visuals or relying on manual pilot data—filling a vital gap in truly automated aerospace tuning.
+
 ## Environment Details
 
 This environment simulates a 1D vertical drone flight subject to turbulent drag, payload scaling and base physics equations. The agent's goal is to tune the PID parameters to securely reach and maintain a targeted altitude.

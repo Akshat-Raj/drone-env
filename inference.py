@@ -1,8 +1,5 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
 #
 # This source code is licensed under the BSD-style license found in the
-# LICENSE file in the root directory of this source tree.
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -109,8 +106,7 @@ ing.
             
             # c. Evaluate step
             try:
-                obs = client.step(pid_params)
-                reward = get_reward(obs.rmse)
+                obs, reward, done, info = client.step(pid_params)
             except Exception as e:
                 print(f"Error during step: {e}")
                 reward = 0.0

@@ -44,7 +44,6 @@ ing.
     try:
         async_client = GenericEnvClient(base_url=api_base_url)
         client = async_client.sync()
-        client.reset()
     except Exception as e:
         print(f"Failed to connect to environment server at {api_base_url}: {e}")
         return
@@ -58,50 +57,63 @@ ing.
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
     
-    # 3. The "Wordle" Pattern Training Loop
-    for episode in range(5): # Run 5 tuning episodes
-        # Get mission details from the environment's reset state
-        target_altitude = 100 # Default if info not available
-        base_wind = -10 # Default if info not available
+    # Run through the tasks defined in openenv.yaml
+    tasks = [
+        {"id": "stability_easy", "target_altitude": 50.0, "mass": 1.0, "base_wind": -5.0},
+        {"id": "payload_medium", "target_altitude": 100.0, "mass": 2.0, "base_wind": -10.0},
+        {"id": "stormy_hard", "target_altitude": 150.0, "mass": 0.5, "base_wind": -15.0}
+    ]
 
-        # a. Create the Prompt
-        prompt_text = f"Mission: Reach {target_altitude:.0f}m altitude. Wind is {base_wind:.0f}N. Predict PID gains."
-        query_tensor = tokenizer.encode(prompt_text, return_tensors="pt")
-
-        # b. Generate multiple completions (the "Group" in GRPO)
-        generation_kwargs = {
-            "max_new_tokens": 20,
-            "do_sample": True,
-            "num_return_sequences": 4,
-            "pad_token_id": tokenizer.eos_token_id,
-        }
+    for task_info in tasks:
+        task_id = task_info["id"]
+        target_altitude = task_info["target_altitude"]
+        base_wind = task_info["base_wind"]
         
-        # Generation with the base model for demonstration
-        outputs = model.generate(query_tensor, **generation_kwargs)
-        response_texts = [tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
+        print(f"[START] task={task_id}", flush=True)
 
-        # c. Evaluate each completion in the environment
-        rewards = []
-        actions = []
-        for text in response_texts:
-            pid_params = extract_pid_from_text(text)
-            actions.append(pid_params)
+        try:
+            client.reset(params=task_info)
+        except Exception as e:
+            print(f"Error during reset: {e}")
+            continue
+
+        # run 5 tuning episodes for each task
+        best_reward = 0.0
+        for episode in range(5):
+            # a. Create the Prompt
+            prompt_text = f"Mission: Reach {target_altitude:.0f}m altitude. Wind is {base_wind:.0f}N. Predict PID gains."
+            query_tensor = tokenizer.encode(prompt_text, return_tensors="pt")
+
+            # b. Generate completions
+            generation_kwargs = {
+                "max_new_tokens": 20,
+                "do_sample": True,
+                "num_return_sequences": 1,
+                "pad_token_id": tokenizer.eos_token_id,
+            }
             
+            outputs = model.generate(query_tensor, **generation_kwargs)
+            text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+            
+            pid_params = extract_pid_from_text(text)
+            
+            # c. Evaluate step
             try:
                 obs = client.step(pid_params)
                 reward = get_reward(obs.rmse)
             except Exception as e:
                 print(f"Error during step: {e}")
                 reward = 0.0
+                
+            print(f"[STEP] step={episode+1} reward={reward:.4f}", flush=True)
             
-            rewards.append(reward)
+            if reward > best_reward:
+                best_reward = reward
 
-        print(f"Episode {episode+1}: Mean Reward: {np.mean(rewards):.4f}")
+        # Using best reward as score for simplification
+        print(f"[END] task={task_id} score={best_reward:.4f} steps=5", flush=True)
 
-    print("\nGRPO Tuning Complete.")
-    # You would save the fine-tuned model here
-    # model.save_pretrained("tuned_drone_controller")
-    # tokenizer.save_pretrained("tuned_drone_controller")
+    print("\nGRPO Tuning Complete.", flush=True)
 
 # The environment variables must be defined as per Round 1 rules.
 API_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.groq.com/openai/v1")

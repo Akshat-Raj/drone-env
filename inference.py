@@ -120,8 +120,9 @@ ing.
             if reward > best_reward:
                 best_reward = reward
 
-        # Using best reward as score for simplification
-        print(f"[END] task={task_id} score={best_reward:.4f} steps=5", flush=True)
+        # Ensure the score is strictly between 0 and 1 as required by the validator
+        final_score = max(0.001, min(0.999, best_reward))
+        print(f"[END] task={task_id} score={final_score:.4f} steps=5", flush=True)
 
     print("\nGRPO Tuning Complete.", flush=True)
 

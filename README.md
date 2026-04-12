@@ -1,11 +1,3 @@
----
-title: Agentic Drone PID Tuner
-emoji: 🚁
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-pinned: false
----
 
 # Agentic Drone PID Tuner
 

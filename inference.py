@@ -42,7 +42,7 @@ ing.
     """
     # 1. Initialize Environment Client
     # NOTE: The environment server might be running on localhost during proxy evaluation. We check OPENENV_BASE_URL if it's separate from API_BASE_URL. 
-    env_base_url = os.environ.get("OPENENV_BASE_URL", "http://127.0.0.1:8000")
+    env_base_url = os.environ.get("OPENENV_BASE_URL", "http://127.0.0.1:7860")
     try:
         async_client = GenericEnvClient(base_url=env_base_url)
         client = async_client.sync()
@@ -55,7 +55,7 @@ ing.
     
     # Initialize OpenAI client using competition injected variables
     llm_api_base = os.environ.get("API_BASE_URL", "https://api.groq.com/openai/v1")
-    llm_api_key = os.environ.get("API_KEY", "dummy_key")
+    llm_api_key = os.environ.get("API_KEY", os.environ.get("HF_TOKEN", "dummy_key"))
     llm_model = os.environ.get("MODEL_NAME", "llama3")
     
     openai_client = OpenAI(

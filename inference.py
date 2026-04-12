@@ -11,6 +11,7 @@ from openenv.core.generic_client import GenericEnvClient
 import numpy as np
 import re
 import os
+from openai import OpenAI
 
 # --- TRL and GRPO Setup ---
 def get_reward(rmse):
@@ -51,11 +52,15 @@ ing.
     # 2. Load a Pre-trained LLM and Tokenizer
     model_name = "gpt2" # Using gpt2 for simplicity, but a larger model is recommended
     
-    # Using GRPOTrainer and GRPOConfig as per modern TRL
-    print(f"Loading model: {model_name}")
-    model = AutoModelForCausalLM.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    tokenizer.pad_token = tokenizer.eos_token
+    # Initialize OpenAI client using competition injected variables
+    llm_api_base = os.environ.get("API_BASE_URL", "https://api.groq.com/openai/v1")
+    llm_api_key = os.environ.get("API_KEY", "dummy_key")
+    llm_model = os.environ.get("MODEL_NAME", "llama3")
+    
+    openai_client = OpenAI(
+        base_url=llm_api_base,
+        api_key=llm_api_key
+    )
     
     # Run through the tasks defined in openenv.yaml
     tasks = [
@@ -81,19 +86,23 @@ ing.
         best_reward = 0.0
         for episode in range(5):
             # a. Create the Prompt
-            prompt_text = f"Mission: Reach {target_altitude:.0f}m altitude. Wind is {base_wind:.0f}N. Predict PID gains."
-            query_tensor = tokenizer.encode(prompt_text, return_tensors="pt")
+            prompt_text = f"Mission: Reach {target_altitude:.0f}m altitude. Wind is {base_wind:.0f}N. Predict PID gains. Format: P: X.XX, I: Y.YY, D: Z.ZZ"
 
-            # b. Generate completions
-            generation_kwargs = {
-                "max_new_tokens": 20,
-                "do_sample": True,
-                "num_return_sequences": 1,
-                "pad_token_id": tokenizer.eos_token_id,
-            }
-            
-            outputs = model.generate(query_tensor, **generation_kwargs)
-            text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+            # b. Generate completions using OpenAI Proxy instead of local model
+            try:
+                response = openai_client.chat.completions.create(
+                    model=llm_model,
+                    messages=[
+                        {"role": "system", "content": "You are a PID tuning expert. Provide PID gains."},
+                        {"role": "user", "content": prompt_text}
+                    ],
+                    max_tokens=50,
+                    temperature=0.7
+                )
+                text = response.choices[0].message.content
+            except Exception as e:
+                print(f"Error calling LLM: {e}")
+                text = ""
             
             pid_params = extract_pid_from_text(text)
             
